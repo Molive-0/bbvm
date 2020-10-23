@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="javacpp">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/javacpp-linux-x86_64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/javacpp-macosx-x86_64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/javacpp-platform.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/javacpp-windows-x86_64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/javacpp.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/llvm-linux-x86_64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/llvm-macosx-x86_64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/llvm-platform.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/llvm-windows-x86_64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/llvm.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/javacpp-linux-arm64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/ml/molive/llvm-linux-arm64.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

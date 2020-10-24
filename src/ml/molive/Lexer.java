@@ -10,7 +10,7 @@ public class Lexer {
 
   public Lexer(Scanner input) {
     code = input;
-    code.useDelimiter("\\s+");
+    code.useDelimiter("[\\s+;]");
   }
 
   public Token getNotFluff() throws ParseException {
@@ -22,18 +22,22 @@ public class Lexer {
   }
 
   public Token getTok() throws ParseException {
-    if (!code.hasNext()) return new EOF();
-    String token = code.next();
-    while (token.startsWith("#")) { // handle comments
-      code.useDelimiter("[\n\r]");
-      code.next();
-      code.useDelimiter("\\s+");
+    String token = "";
+    while (token.isEmpty()) {
+      if (!code.hasNext()) return new EOF();
       token = code.next();
+      while (token.startsWith("#")) { // handle comments
+        if (!code.hasNext()) return new EOF();
+        code.useDelimiter("[\n\r]");
+        code.next();
+        code.useDelimiter("[\\s+;]");
+        token = code.next();
+      }
     }
 
-    if (token.endsWith(";")) { // ignore the semicolons, they add nothing to the language.
-      token = token.substring(0, token.length() - 1);
-    }
+    // if (token.endsWith(";")) { // ignore the semicolons, they add nothing to the language.
+    //  token = token.substring(0, token.length() - 1);
+    // }
 
     if (STwoParam.identify(token)) {
       return parseSTwoParam(token);

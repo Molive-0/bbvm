@@ -1,6 +1,7 @@
 package ml.molive;
 
 // General stuff
+import java.util.ArrayList;
 import java.util.Stack;
 import org.bytedeco.javacpp.*;
 
@@ -30,7 +31,7 @@ public class IRconverter {
             "main",
             LLVMFunctionType(
                 // LLVMPointerType(LLVMArrayType(LLVMInt64Type(),variableCount),0),
-                LLVMInt64Type(),
+                LLVMVoidType(),
                 (LLVMTypeRef) null,
                 0,
                 0)); // Create a new main function, which returns an array of longs.
@@ -137,30 +138,58 @@ public class IRconverter {
     block = labels.end;
   }
 
-  public void addEOF() {
-    /*LLVMValueRef[] vars = variables.peek();
-    LLVMValueRef array =
-        LLVMBuildAlloca(builder,LLVMArrayType(LLVMInt64Type(),vars.length), "returnArray");
-    //LLVMValueRef array = LLVMBuildLoad(builder,arrayPtr,"");
+  public void addEOF(ArrayList<String> variableList) {
 
-    for (int i = 0; i < vars.length; i++) {
-      LLVMValueRef gep = LLVMBuildGEP2(
-          builder, LLVMInt64Type(), array, LLVMConstInt(LLVMInt64Type(),i,0), 1, new BytePointer("createArray"));
-      LLVMBuildStore(builder, vars[i], gep);
-      //array = LLVMBuildInsertElement(builder,array,vars[i],LLVMConstInt(LLVMInt64Type(),i,0), "");
+    LLVMTypeRef[] funcArgs = {LLVMPointerType(LLVMInt8Type(), 0), LLVMInt64Type()};
+    LLVMValueRef printf =
+        LLVMAddFunction(
+            mod, "printf", LLVMFunctionType(LLVMVoidType(), new PointerPointer<>(funcArgs), 2, 0));
+    LLVMSetFunctionCallConv(main, LLVMCCallConv);
+
+    for (int i = 0; i < variableList.size(); i++) {
+      LLVMValueRef fmt = LLVMBuildGlobalStringPtr(builder, variableList.get(i) + ": %lld\n", "");
+
+      LLVMValueRef[] funcArgsTrue = {fmt, variables.peek()[i]};
+
+      LLVMBuildCall(builder, printf, new PointerPointer<>(funcArgsTrue), 2, "");
     }
-    //LLVMBuildStore(builder,array,arrayPtr);
-    LLVMBuildRet(builder, array); */
 
-    LLVMDumpModule(mod);
-
-    LLVMBuildRet(builder, variables.peek()[0]);
+    LLVMBuildRetVoid(builder);
 
     LLVMVerifyModule(mod, LLVMAbortProcessAction, error);
     LLVMDisposeMessage(error);
+
+    LLVMDisposeBuilder(builder);
   }
 
-  public long run() {
+  private void runOptimiser() {
+    LLVMPassManagerRef pass = LLVMCreatePassManager();
+    LLVMAddConstantMergePass(pass);
+    LLVMAddFunctionInliningPass(pass);
+    LLVMAddGlobalOptimizerPass(pass);
+    LLVMAddDeadArgEliminationPass(pass);
+    LLVMAddConstantPropagationPass(pass);
+    LLVMAddAggressiveInstCombinerPass(pass);
+    LLVMAddPromoteMemoryToRegisterPass(pass);
+    // LLVMAddDemoteMemoryToRegisterPass(pass); // Demotes every possible value to memory
+    LLVMAddLoopRotatePass(pass);
+    // LLVMAddLoopUnrollPass(pass);
+    LLVMAddGVNPass(pass);
+    LLVMAddCFGSimplificationPass(pass);
+    LLVMAddLoopDeletionPass(pass);
+    // LLVMAddLoopVectorizePass(pass);
+    LLVMAddAggressiveDCEPass(pass);
+    LLVMAddDeadStoreEliminationPass(pass);
+    LLVMAddGVNPass(pass);
+    LLVMAddCFGSimplificationPass(pass);
+
+    LLVMRunPassManager(pass, mod);
+    // LLVMRunPassManager(pass, mod);
+    // LLVMRunPassManager(pass, mod);
+    LLVMDisposePassManager(pass);
+  }
+
+  public void run() {
     LLVMExecutionEngineRef engine = new LLVMExecutionEngineRef();
     if (LLVMCreateJITCompilerForModule(engine, mod, 2, error) != 0) {
       System.err.println(error.getString());
@@ -168,44 +197,35 @@ public class IRconverter {
       System.exit(-1);
     }
 
-    LLVMPassManagerRef pass = LLVMCreatePassManager();
-    LLVMAddConstantPropagationPass(pass);
-    LLVMAddInstructionCombiningPass(pass);
-    LLVMAddPromoteMemoryToRegisterPass(pass);
-    // LLVMAddDemoteMemoryToRegisterPass(pass); // Demotes every possible value to memory
-    LLVMAddGVNPass(pass);
-    LLVMAddCFGSimplificationPass(pass);
-    LLVMAddLoopDeletionPass(pass);
-    LLVMAddLoopVectorizePass(pass);
-    LLVMAddAggressiveDCEPass(pass);
-    LLVMAddDeadStoreEliminationPass(pass);
-    LLVMAddInstructionCombiningPass(pass);
-    LLVMAddGVNPass(pass);
-    LLVMAddCFGSimplificationPass(pass);
-    LLVMRunPassManager(pass, mod);
-    LLVMDumpModule(mod);
+    runOptimiser();
+    // LLVMDumpModule(mod);
 
     System.out.println();
     System.out.println("Running main...");
-    LLVMGenericValueRef exec_res = LLVMRunFunction(engine, main, 0, (PointerPointer<Pointer>) null);
-    /*LongPointer p = new LongPointer(LLVMGenericValueToPointer(exec_res));
-    p.capacity(variables.peek().length);
-    p.limit(p.capacity());
-    LongBuffer buf = p.asBuffer();
-    LongPointer test = new LongPointer(new long[]{1,2,3,4});
-    LongBuffer testBuf = test.asBuffer();
+    LLVMRunFunction(engine, main, 0, (PointerPointer<Pointer>) null);
 
-    System.out.println(p.get(0));
-    System.out.println(p.get(1));
-    System.out.println(test.get(0));
-    System.out.println(test.get(1)); */
-
-    LLVMDisposePassManager(pass);
-    LLVMDisposeBuilder(builder);
     LLVMDisposeExecutionEngine(engine);
+  }
 
-    return LLVMGenericValueToInt(exec_res, 0);
+  public void dumpCode() {
+    runOptimiser();
 
-    // return p.asBuffer().array();
+    var triple = LLVMGetDefaultTargetTriple();
+    LLVMInitializeNativeTarget();
+    var target = LLVMGetFirstTarget();
+    var cpu = LLVMGetHostCPUName();
+    var feature = LLVMGetHostCPUFeatures();
+    var target_machine =
+        LLVMCreateTargetMachine(
+            target,
+            triple,
+            cpu,
+            feature,
+            LLVMCodeGenLevelAggressive,
+            LLVMRelocDefault,
+            LLVMCodeModelDefault);
+    LLVMTargetMachineEmitToFile(
+        target_machine, mod, new BytePointer("./out.o"), LLVMObjectFile, error);
+    LLVMDisposeErrorMessage(error);
   }
 }

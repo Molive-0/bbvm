@@ -24,7 +24,7 @@ public class STwoParam extends Statement {
   }
 
   public static boolean identify(String ident) {
-    return Arrays.asList(STwoParam.STATEMENTS).contains(ident);
+    return Arrays.asList(STwoParam.STATEMENTS).contains(ident.toLowerCase());
   }
 
   public STwoParam(String ident, Identifier one, Identifier two) {

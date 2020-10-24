@@ -20,11 +20,11 @@ public class Statement extends Token {
   }
 
   public static boolean identify(String ident) {
-    return Arrays.asList(Statement.STATEMENTS).contains(ident);
+    return Arrays.asList(Statement.STATEMENTS).contains(ident.toLowerCase());
   }
 
   public Statement(String ident) {
-    statement = ident;
+    statement = ident.toLowerCase();
   }
 
   @Override

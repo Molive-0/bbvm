@@ -8,7 +8,7 @@ public class Fluff extends Statement {
   };
 
   public static boolean identify(String ident) {
-    return Arrays.asList(Fluff.STATEMENTS).contains(ident);
+    return Arrays.asList(Fluff.STATEMENTS).contains(ident.toLowerCase());
   }
 
   @Override

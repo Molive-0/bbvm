@@ -17,7 +17,7 @@ public class SWhile extends Statement {
   }
 
   public static boolean identify(String ident) {
-    return ident.equals("while");
+    return ident.toLowerCase().equals("while");
   }
 
   public SWhile(String ident, Identifier identifier, Number num) {

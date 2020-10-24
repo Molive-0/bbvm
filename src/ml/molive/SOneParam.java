@@ -30,7 +30,7 @@ public class SOneParam extends Statement {
   }
 
   public static boolean identify(String ident) {
-    return Arrays.asList(SOneParam.STATEMENTS).contains(ident);
+    return Arrays.asList(SOneParam.STATEMENTS).contains(ident.toLowerCase());
   }
 
   public SOneParam(String ident, Identifier one) {

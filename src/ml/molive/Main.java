@@ -1,7 +1,7 @@
 package ml.molive;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,8 +11,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class Main {
 
-  public static void main(String @NotNull [] args) throws FileNotFoundException {
-    Lexer l = new Lexer(new Scanner(new File(args[0])));
+  public static void main(String @NotNull [] args) throws IOException {
+    long startTime = System.nanoTime();
+
+    if (args.length == 0) {
+      System.err.println("No args!");
+      System.exit(-1);
+    }
+
+    boolean compile = false;
+    String filename;
+    if (args.length > 1) {
+      compile = args[0].equals("-c");
+      filename = args[1];
+    } else {
+      filename = args[0];
+    }
+    Lexer l = new Lexer(new Scanner(new File(filename)));
 
     System.out.println("Interpreting file...");
     Token t = new EOF();
@@ -36,12 +51,12 @@ public class Main {
     }
 
     HashMap<String, Integer> variableSet = new HashMap<>();
-    String firstVar = "";
+    ArrayList<String> variableList = new ArrayList<>();
     for (Statement s : tokenList) {
       for (String v : s.getVariables()) {
-        variableSet.putIfAbsent(v, variableSet.size());
-        if (firstVar.isEmpty()) {
-          firstVar = v;
+        if (!variableSet.containsKey(v)) {
+          variableSet.put(v, variableSet.size());
+          variableList.add(v);
         }
       }
     }
@@ -58,10 +73,37 @@ public class Main {
         s.compile(irc, variableSet);
       }
     }
-    irc.addEOF();
+    irc.addEOF(variableList);
 
-    System.out.println("Running JIT compiler...");
+    long endTime1 = System.nanoTime();
 
-    System.out.println(firstVar + ": " + irc.run());
+    System.out.printf(
+        "LLVM IR compile took %d nanoseconds (%d milliseconds).\n",
+        endTime1 - startTime, (endTime1 - startTime) / 1000000);
+
+    if (compile) {
+      System.out.println("Running normal compiler...");
+
+      irc.dumpCode();
+      /*try {
+        Runtime.getRuntime().exec(new String[] {"LINK.exe", "start"});
+      } catch (Exception e) {
+        System.err.println("Something went wrong there. Do you have LINK installed?");
+        System.err.println("Go to https://visualstudio.microsoft.com/downloads/?q=build+tools");
+        System.err.println("and run Tools for Visual Studio, and then install C++ tools.");
+      }*/
+      System.out.println("A file called a.out has been made.");
+      System.out.println("...you'll have to link it yourself :(");
+    } else {
+
+      System.out.println("Running JIT compiler...");
+
+      irc.run();
+
+      long endTime2 = System.nanoTime();
+      System.out.printf(
+          "LLVM IR execution took %d nanoseconds (%d milliseconds).\n",
+          endTime2 - endTime1, (endTime2 - endTime1) / 1000000);
+    }
   }
 }

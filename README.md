@@ -1,5 +1,5 @@
 # bbvm
-A JIT compiler for the Bare Bones language
+A JIT compiler for the Bare Bones language. Runs about 25x faster than my interpreter.
 
 Requires JavaCPP and the LLVM code in /src/ml/molive.
 
